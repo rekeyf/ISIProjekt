@@ -221,5 +221,50 @@ public class Kontroler {
 		return modelAndView;
 
 	}
-    
+	
+	
+    @RequestMapping(value =  "/mojelokaty" , method = RequestMethod.GET)
+	public ModelAndView mojeLokatyPage() {
+                
+                ResultSet nrRachunku;
+                ResultSet ID_lokaty;
+                
+                //tworzenie modelu i widoku
+		ModelAndView modelAndView = new ModelAndView();              
+
+                //Pobieranie informacji o logowaniu               
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                //Pobieranie nazwy zalogowanego użytkownika (aby użyć jej w zapytaniu)
+                String currentPrincipalName = authentication.getName();
+                
+                
+                //Tutaj jest drugi sposób na realizowanie operacji na bazie danych: przez zwykłe zapytnaia SQLowe.
+                JdbcTemplate jt = new JdbcTemplate(dataSource);
+                
+                try
+                {
+                nrRachunku = jt.queryForObject("SELECT numer_rachunku FROM `rachunki` WHERE login = '" + currentPrincipalName + "'", ResultSet.class);
+                }catch (org.springframework.dao.EmptyResultDataAccessException e) { 
+		nrRachunku = null;
+                }
+                try
+                {
+                ID_lokaty = jt.queryForObject("SELECT id_lokaty FROM `lokaty` WHERE numer_rachunku = '" + nrRachunku + "'", ResultSet.class);
+                } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+		ID_lokaty = null;
+                    }
+                //przekazywanie danych, które trzeba wyświetlić na stronie
+		modelAndView.addObject("title", "System Bankowosci Internetowej");
+		modelAndView.addObject("message", "Moje lokaty:");
+                modelAndView.addObject("nrRachunku", nrRachunku);
+                
+                if(ID_lokaty == null)
+                    modelAndView.addObject("informacjaOLokacie", "Nie masz jeszcze żadnych lokat.");
+                else
+                    modelAndView.addObject("ID_lokaty",ID_lokaty);
+                //przekazywanie widoku (strony .jsp)
+		modelAndView.setViewName("mojelokaty");
+		return modelAndView;
+
+	}
 }
